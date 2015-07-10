@@ -2,7 +2,7 @@
 # Distributed under the terms of the GNU General Public License v2
 # $Header: /var/cvsroot/gentoo-x86/net-im/psi/psi-9999.ebuild,v 1.12 2011/06/30 09:23:16 pva Exp $
 
-EAPI=5
+EAPI="5"
 
 PLOCALES="ar be bg br ca cs da de ee el eo es et fi fr hr hu it ja mk nl pl pt pt_BR ru se sk sl sr sr@latin sv sw uk ur_PK vi zh_CN zh_TW"
 
@@ -15,12 +15,12 @@ EGIT_MIN_CLONE_TYPE="single"
 
 inherit eutils l10n multilib git-r3 qmake-utils
 
-DESCRIPTION="Qt4 Jabber client, with Licq-like interface"
+DESCRIPTION="Qt Jabber client, with Licq-like interface"
 HOMEPAGE="http://psi-im.org/"
 LICENSE="GPL-2"
 SLOT="0"
 KEYWORDS=""
-IUSE="crypt dbus debug doc enchant extras jingle iconsets +qt4 qt5 spell sql ssl xscreensaver
+IUSE="crypt dbus debug doc enchant extras jingle iconsets qt4 qt5 spell sql ssl xscreensaver
 plugins whiteboarding webkit"
 
 REQUIRED_USE="
@@ -68,7 +68,7 @@ RDEPEND="
 "
 DEPEND="${RDEPEND}
 	extras? (
-		>=sys-devel/qconf-1.6_pre1
+		sys-devel/qconf
 	)
 	doc? ( app-doc/doxygen )
 	virtual/pkgconfig
@@ -77,9 +77,10 @@ PDEPEND="
 	crypt? ( >=app-crypt/qca-2.1.0[gpg] )
 	jingle? (
 		net-im/psimedia[extras?]
-		>=app-crypt/qca-2.1.0.3[openssl]
+		>=app-crypt/qca-2.1.0[openssl]
 	)
-	ssl? ( >=app-crypt/qca-2.1.0.3[openssl] )
+	plugins? ( net-im/psi-plugins-meta )
+	ssl? ( >=app-crypt/qca-2.1.0[openssl] )
 "
 RESTRICT="test"
 
@@ -151,13 +152,15 @@ src_prepare() {
 		} || {
 			echo "0.16.${PSI_PLUS_REVISION} (@@DATE@@)" > version
 		}
-
-		qconf || die "Failed to create ./configure."
 	fi
 	epatch_user
 }
 
 src_configure() {
+	qconf || die "Failed to create ./configure."
+	# qconf generated configure script...
+	use qt4 && QTVERSION=4
+	use qt5 && QTVERSION=5
 	# unable to use econf because of non-standard configure script
 	# disable growl as it is a MacOS X extension only
 	local myconf="
@@ -182,17 +185,10 @@ src_configure() {
 		use webkit && myconf+=" --enable-webkit"
 	fi
 
-	QTDIR="${EPREFIX}"/usr
-	use qt5 && QTDIR="${EPREFIX}"/usr/$(get_libdir)/qt5
-
-	elog ./configure --prefix="${EPREFIX}"/usr \
-			--qtdir="${QTDIR}" \
-			${myconf}
-
 	./configure \
 		--prefix="${EPREFIX}"/usr \
-		--qtdir="${QTDIR}" \
-		${myconf} || die
+		--qtselect="${QTVERSION}" \
+		${myconf} || die "./configure failed"
 
 	use qt4 && eqmake4 psi.pro
 	use qt5 && eqmake5 psi.pro
