@@ -1,6 +1,6 @@
 # Copyright 1999-2015 Gentoo Foundation
 # Distributed under the terms of the GNU General Public License v2
-# $Header: Exp $
+# $Id$
 
 EAPI=5
 
@@ -20,7 +20,8 @@ SLOT="0"
 KEYWORDS="~amd64 ~x86"
 IUSE="examples grass gsl mapserver postgres python test"
 
-REQUIRED_USE="python? ( ${PYTHON_REQUIRED_USE} )"
+REQUIRED_USE="python? ( ${PYTHON_REQUIRED_USE} )
+		mapserver? ( python )"
 
 RDEPEND="
 	${PYTHON_DEPS}
@@ -36,6 +37,7 @@ RDEPEND="
 	dev-qt/qtsvg:4
 	dev-qt/qtsql:4
 	dev-qt/qtwebkit:4
+	dev-qt/designer:4
 	x11-libs/qscintilla
 	|| (
 		( || ( <x11-libs/qwt-6.1.2:6[svg] >=x11-libs/qwt-6.1.2:6[svg,qt4] ) >=x11-libs/qwtpolar-1 )
@@ -53,15 +55,12 @@ RDEPEND="
 	)
 	dev-db/sqlite:3
 	dev-db/spatialite
+	app-crypt/qca:2[qt4,openssl]
 "
 
 DEPEND="${RDEPEND}
 	sys-devel/bison
 	sys-devel/flex"
-
-PATCHES=(
-	"${FILESDIR}/${P}-fix-qwt-search.patch"
-)
 
 pkg_setup() {
 	python-single-r1_pkg_setup
@@ -80,7 +79,7 @@ src_configure() {
 		"-DWITH_INTERNAL_SPATIALITE=OFF"
 		$(cmake-utils_use_with postgres POSTGRESQL)
 		$(cmake-utils_use_with grass GRASS)
-		$(cmake-utils_use_with mapserver MAPSERVER)
+		$(cmake-utils_use_with mapserver SERVER)
 		$(cmake-utils_use_with python BINDINGS)
 		$(cmake-utils_use python BINDINGS_GLOBAL_INSTALL)
 		$(cmake-utils_use_with python PYSPATIALITE)
